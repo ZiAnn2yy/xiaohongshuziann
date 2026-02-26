@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://content-reverse-lab.local/schemas/analysis-output.json",
+  "type": "object",
+  "required": ["verticalId", "sourceMeta", "structure", "scoring", "template", "rewriteScript"],
+  "properties": {
+    "verticalId": { "type": "string" },
+    "sourceMeta": {
+      "type": "object",
+      "required": ["platform", "tone", "audienceLevel", "charCount"],
+      "properties": {
+        "platform": { "type": "string" },
+        "tone": { "type": "string" },
+        "audienceLevel": { "type": "string" },
+        "charCount": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "structure": {
+      "type": "object",
+      "required": ["hook", "conflict", "valueDensity", "evidence", "cta"],
+      "properties": {
+        "hook": { "$ref": "#/$defs/segment" },
+        "conflict": { "$ref": "#/$defs/segment" },
+        "valueDensity": { "$ref": "#/$defs/segment" },
+        "evidence": { "$ref": "#/$defs/segment" },
+        "cta": { "$ref": "#/$defs/segment" }
+      },
+      "additionalProperties": false
+    },
+    "scoring": {
+      "type": "object",
+      "required": ["dimensions", "totalScore", "formulaVersion"],
+      "properties": {
+        "dimensions": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": { "$ref": "#/$defs/dimensionScore" }
+        },
+        "totalScore": { "type": "number", "minimum": 0, "maximum": 100 },
+        "formulaVersion": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "template": {
+      "type": "object",
+      "required": ["title", "slots", "skeleton"],
+      "properties": {
+        "title": { "type": "string" },
+        "slots": { "type": "array", "items": { "type": "string" } },
+        "skeleton": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "rewriteScript": {
+      "type": "object",
+      "required": ["draft", "styleHints"],
+      "properties": {
+        "draft": { "type": "string" },
+        "styleHints": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "segment": {
+      "type": "object",
+      "required": ["summary", "evidenceSpan"],
+      "properties": {
+        "summary": { "type": "string" },
+        "evidenceSpan": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "dimensionScore": {
+      "type": "object",
+      "required": ["dimension", "weight", "score", "evidenceSpan", "improveAdvice"],
+      "properties": {
+        "dimension": {
+          "type": "string",
+          "enum": ["hookStrength", "narrativeProgression", "valueDensity", "credibilityEvidence", "ctaEffectiveness"]
+        },
+        "weight": { "type": "number", "minimum": 0, "maximum": 1 },
+        "score": { "type": "number", "minimum": 0, "maximum": 100 },
+        "evidenceSpan": { "type": "string" },
+        "improveAdvice": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
