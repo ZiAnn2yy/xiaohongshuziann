@@ -14,16 +14,16 @@ export default function App() {
       <Route
         path="/"
         element={
-          <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100">
+          <main className="min-h-screen bg-gradient-to-br from-neutral-950 to-neutral-900 px-4 py-8 text-neutral-100">
             <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
-              <header className="rounded-2xl border border-slate-800 bg-slate-900/80 p-6">
-                <h1 className="text-2xl font-semibold">内容逆向实验室 · 大学生活</h1>
-                <p className="mt-2 text-sm text-slate-400">
+              <header className="hero-bg relative overflow-hidden rounded-2xl border border-white/5 bg-neutral-900/70 p-6 backdrop-blur-md brightness-[1.03] contrast-[1.08] saturate-[1.15] before:content-[''] before:absolute before:inset-0 before:bg-gradient-to-b before:from-transparent before:via-transparent before:to-black/20 before:pointer-events-none">
+                <h1 className="hero-title relative z-10 text-2xl font-semibold">💕 内容逆向实验室 · 大学生活</h1>
+                <p className="relative z-10 mt-2 text-sm text-neutral-400">
                   输入一段脚本，快速得到结构化分析结果。
                 </p>
               </header>
 
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
+              <div className="rounded-2xl border border-white/5 bg-neutral-900/70 p-5 backdrop-blur-md">
                 <InputPage onResult={handleResult} />
               </div>
             </div>

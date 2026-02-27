@@ -4,10 +4,86 @@
 
 body {
   margin: 0;
-  font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-family: "LXGW WenKai", "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
   color-scheme: dark;
 }
 
 #root {
   min-height: 100vh;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.5);
+}
+
+.hero-bg::before,
+.hero-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hero-bg::before {
+  background: radial-gradient(circle at 20% 30%, rgba(255, 192, 203, 0.08) 0%, transparent 50%),
+              radial-gradient(circle at 80% 70%, rgba(216, 191, 216, 0.06) 0%, transparent 60%);
+  animation: gentle-pulse 12s ease-in-out infinite;
+}
+
+.hero-bg::after {
+  background: radial-gradient(circle at 60% 20%, rgba(236, 72, 153, 0.05) 0%, transparent 40%),
+              radial-gradient(circle at 30% 80%, rgba(167, 139, 250, 0.04) 0%, transparent 50%);
+  animation: gentle-pulse 15s ease-in-out infinite reverse;
+}
+
+@keyframes gentle-pulse {
+  0%, 100% { 
+    opacity: 0.6; 
+    transform: scale(1); 
+  }
+  50% { 
+    opacity: 1; 
+    transform: scale(1.05); 
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(2deg);
+  }
+}
+
+.floating {
+  animation: float 6s ease-in-out infinite;
+}
+
+.hero-title {
+  animation: title-glow 4s ease-in-out infinite;
+}
+
+@keyframes title-glow {
+  0%, 100% { 
+    text-shadow: 0 0 10px rgba(255, 192, 203, 0.3); 
+  }
+  50% { 
+    text-shadow: 0 0 20px rgba(255, 192, 203, 0.6); 
+  }
 }
