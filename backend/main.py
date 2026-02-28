@@ -23,6 +23,7 @@ allowed_origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "https://xiaohongshuziann.up.railway.app",
+    "https://xiaohongshuziann.vercel.app",
 ]
 
 railway_frontend_url = os.getenv("RAILWAY_FRONTEND_URL")
