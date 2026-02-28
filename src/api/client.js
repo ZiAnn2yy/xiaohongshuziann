@@ -1,3 +1,5 @@
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
+
 async function request(path, options = {}) {
   const token = localStorage.getItem("crl_token");
   const headers = {
@@ -6,7 +8,7 @@ async function request(path, options = {}) {
     ...(options.headers ?? {}),
   };
 
-  const response = await fetch(path, { ...options, headers });
+  const response = await fetch(`${API_BASE}${path}`, { ...options, headers });
   if (!response.ok) {
     const errData = await response.json().catch(() => ({}));
     throw new Error(errData.message || "Request failed");
