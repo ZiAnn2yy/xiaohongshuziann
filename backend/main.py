@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
@@ -10,7 +11,6 @@ from .analyzer import AnalyzerService
 from .deepseek_client import DeepSeekClient
 from .models import AnalysisRequest, LoginRequest
 
-# 从项目根目录加载 .env
 _env_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(_env_path)
 logging.basicConfig(level=logging.INFO)
@@ -19,9 +19,19 @@ logger = logging.getLogger("backend.main")
 
 app = FastAPI(title="Content Reverse Lab API", version="0.2.0")
 
+allowed_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://xiaohongshuziann.up.railway.app",
+]
+
+railway_frontend_url = os.getenv("RAILWAY_FRONTEND_URL")
+if railway_frontend_url:
+    allowed_origins.append(railway_frontend_url)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
