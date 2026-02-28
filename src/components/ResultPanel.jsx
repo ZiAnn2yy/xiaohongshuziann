@@ -178,24 +178,28 @@ function HeroRewriteCard({ fullRewrite }) {
   const [expanded, setExpanded] = useState(false);
   if (!fullRewrite) return null;
 
+  const PREVIEW_LENGTH = 500;
+  const shouldTruncate = fullRewrite.length > 800;
+  const displayText = shouldTruncate && !expanded 
+    ? fullRewrite.substring(0, PREVIEW_LENGTH) + "..." 
+    : fullRewrite;
+
   return (
     <div className="relative z-10 rounded-2xl border border-white/5 bg-neutral-900/70 p-4 shadow-xl shadow-violet-900/10 backdrop-blur-md">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-base font-semibold text-violet-300">✨ 专家改写版</h3>
         <CopyButton text={fullRewrite} size="lg" />
       </div>
-      <div 
-        className={`rounded-2xl bg-neutral-800/50 p-4 text-sm text-neutral-200 whitespace-pre-wrap overflow-y-auto ${expanded ? "max-h-none" : "max-h-32"}`}
-      >
-        {fullRewrite}
+      <div className="rounded-2xl bg-neutral-800/50 p-4 text-sm text-neutral-200 whitespace-pre-wrap">
+        {displayText}
       </div>
-      {fullRewrite.length > 150 && (
+      {shouldTruncate && (
         <button
           type="button"
           onClick={() => setExpanded(!expanded)}
           className="mt-2 text-xs text-violet-400 hover:text-violet-300 transition-all"
         >
-          {expanded ? "收起全文" : "展开全文"}
+          {expanded ? "收起全文" : `展开全文（共 ${fullRewrite.length} 字）`}
         </button>
       )}
     </div>

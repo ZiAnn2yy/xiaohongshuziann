@@ -56,7 +56,11 @@ class DeepSeekClient:
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
         }
-        payload: dict[str, Any] = {"model": self.model, "messages": messages}
+        payload: dict[str, Any] = {
+            "model": self.model, 
+            "messages": messages,
+            "max_tokens": 8192,
+        }
         if response_format:
             payload["response_format"] = response_format
 
