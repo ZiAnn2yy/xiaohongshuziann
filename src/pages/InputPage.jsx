@@ -4,6 +4,7 @@ import { verticalProfile } from "../config/vertical";
 import { saveAnalysisHistory } from "../utils/localStorage";
 import LoadingProgress from "../components/LoadingProgress";
 import HistoryList from "../components/HistoryList";
+import VideoParser from "../components/VideoParser";
 
 const LOADING_STAGES = [
   { threshold: 0, text: "正在连接 AI 服务..." },
@@ -116,6 +117,10 @@ export default function InputPage({ onResult }) {
 
         {loading && <LoadingProgress progress={progress} stageText={stageText} />}
       </form>
+
+      <div className="mt-6">
+        <VideoParser />
+      </div>
 
       <HistoryList
         isOpen={showHistory}

@@ -19,6 +19,11 @@ class LoginRequest(BaseModel):
     password: str = Field(min_length=1)
 
 
+class VideoParseRequest(BaseModel):
+    """视频解析请求"""
+    url: str = Field(min_length=10, description="小红书视频链接")
+
+
 class SentenceAnalysisItem(BaseModel):
     """单句分析结果"""
     sentence: str = Field(description="原文句子")

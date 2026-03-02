@@ -29,6 +29,12 @@ export const apiClient = {
       body: JSON.stringify(payload),
     });
   },
+  parseVideo(payload) {
+    return request("/api/video/parse", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
   history() {
     return request("/api/history");
   },

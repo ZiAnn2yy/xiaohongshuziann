@@ -9,7 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .analyzer import AnalyzerService
 from .deepseek_client import DeepSeekClient
-from .models import AnalysisRequest, LoginRequest
+from .models import AnalysisRequest, LoginRequest, VideoParseRequest
+from .video_parser import video_parser_service
 
 _env_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(_env_path)
@@ -71,3 +72,9 @@ async def history() -> dict[str, list[Any]]:
 @app.get("/api/usage")
 async def usage() -> dict[str, int]:
     return {"todayCalls": 0, "remainingQuota": 100}
+
+
+@app.post("/api/video/parse")
+async def parse_video(payload: VideoParseRequest) -> dict:
+    logger.info("video_parse_request url=%s", payload.url[:50] + "...")
+    return await video_parser_service.parse(payload.url)
