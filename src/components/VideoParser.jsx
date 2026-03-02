@@ -6,17 +6,20 @@ export default function VideoParser() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
+  const [videoType, setVideoType] = useState("");
 
   async function handleParse(event) {
     event.preventDefault();
     setLoading(true);
     setError("");
     setVideoUrl("");
+    setVideoType("");
 
     try {
       const result = await apiClient.parseVideo({ url });
       if (result.success) {
         setVideoUrl(result.video_url);
+        setVideoType(result.type || "mp4");
       } else {
         setError(result.error || "解析失败");
       }
@@ -31,7 +34,7 @@ export default function VideoParser() {
     if (!videoUrl) return;
     const link = document.createElement("a");
     link.href = videoUrl;
-    link.download = `xiaohongshu_video_${Date.now()}.mp4`;
+    link.download = `xhs_video_${Date.now()}.${videoType === "m3u8" ? "m3u8" : "mp4"}`;
     link.target = "_blank";
     document.body.appendChild(link);
     link.click();
@@ -39,10 +42,10 @@ export default function VideoParser() {
   }
 
   return (
-    <div className="rounded-2xl border border-teal-400/30 bg-teal-900/20 p-4 backdrop-blur-md">
+    <div className="rounded-2xl border border-white/5 bg-neutral-900/70 p-4 backdrop-blur-md">
       <div className="mb-3 flex items-center gap-2">
         <span className="text-xl">🎬</span>
-        <h3 className="text-lg font-semibold text-teal-200">视频解析</h3>
+        <h3 className="text-lg font-semibold">视频解析</h3>
       </div>
 
       <p className="mb-3 text-sm text-neutral-400">
@@ -54,8 +57,8 @@ export default function VideoParser() {
           type="text"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          placeholder="https://www.xiaohongshu.com/explore/xxxxxx"
-          className="w-full rounded-xl border border-white/10 bg-neutral-900/70 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
+          placeholder="http://xhslink.com/o/xxxxxx 或 https://www.xiaohongshu.com/explore/xxxxxx"
+          className="w-full rounded-xl border border-white/10 bg-neutral-900/70 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
           disabled={loading}
         />
 
@@ -68,7 +71,7 @@ export default function VideoParser() {
         <button
           type="submit"
           disabled={loading || !url.trim()}
-          className="w-full rounded-xl border border-teal-400/30 bg-teal-600/80 px-4 py-2 text-white backdrop-blur-sm transition-all hover:scale-105 hover:bg-teal-500/90 hover:ring-2 hover:ring-teal-300/20 disabled:opacity-50 disabled:hover:scale-100"
+          className="w-full rounded-xl bg-violet-600/80 px-4 py-2 text-white backdrop-blur-sm transition-all hover:scale-105 hover:bg-violet-500/90 hover:ring-2 hover:ring-violet-300/20 disabled:opacity-50 disabled:hover:scale-100"
         >
           {loading ? "解析中..." : "🔍 解析视频"}
         </button>
@@ -76,11 +79,15 @@ export default function VideoParser() {
 
       {videoUrl && (
         <div className="mt-4 space-y-3">
+          <div className="flex items-center gap-2 text-sm text-neutral-400">
+            <span>📁 格式: {videoType?.toUpperCase()}</span>
+          </div>
+
           <div className="overflow-hidden rounded-xl border border-white/10 bg-black/50">
             <video
               controls
               src={videoUrl}
-              className="w-full"
+              className="w-full rounded-xl"
               style={{ maxHeight: "300px" }}
             >
               您的浏览器不支持视频播放
