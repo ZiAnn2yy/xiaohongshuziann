@@ -3,7 +3,14 @@ import { useState, useRef, useCallback } from "react";
 const SUPPORTED_FORMATS = ["mp3", "wav", "m4a", "mp4", "webm", "ogg", "flac", "aac"];
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
 
+const MODEL_OPTIONS = [
+  { id: "tiny", name: "Tiny (~75MB)", model: "Xenova/whisper-tiny", size: 75 },
+  { id: "small", name: "Small (~250MB)", model: "Xenova/whisper-small", size: 250 },
+  { id: "medium", name: "Medium (~750MB)", model: "Xenova/whisper-medium", size: 750 },
+];
+
 function formatTimestamp(seconds) {
+  if (!seconds || !isFinite(seconds)) return "00:00";
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
@@ -13,6 +20,18 @@ function formatFileSize(bytes) {
   if (bytes < 1024) return bytes + " B";
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
   return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
+
+function isNetworkError(error) {
+  const msg = error?.message?.toLowerCase() || "";
+  return (
+    msg.includes("unexpected token") ||
+    msg.includes("<!doctype") ||
+    msg.includes("failed to fetch") ||
+    msg.includes("network") ||
+    msg.includes("cors") ||
+    msg.includes("timeout")
+  );
 }
 
 export default function AudioTranscribe() {
@@ -25,9 +44,12 @@ export default function AudioTranscribe() {
   const [transcript, setTranscript] = useState("");
   const [error, setError] = useState("");
   const [modelLoaded, setModelLoaded] = useState(false);
-  
+  const [selectedModel, setSelectedModel] = useState("tiny");
+  const [showModelSelector, setShowModelSelector] = useState(false);
+
   const fileInputRef = useRef(null);
   const transcriberRef = useRef(null);
+  const currentModelRef = useRef(null);
 
   const handleFileSelect = useCallback((selectedFile) => {
     if (!selectedFile) return;
@@ -46,7 +68,7 @@ export default function AudioTranscribe() {
     setError("");
     setFile(selectedFile);
     setTranscript("");
-    
+
     const url = URL.createObjectURL(selectedFile);
     setMediaUrl(url);
   }, []);
@@ -66,55 +88,111 @@ export default function AudioTranscribe() {
     handleFileSelect(selectedFile);
   }, [handleFileSelect]);
 
-  const loadModel = async () => {
-    if (modelLoaded || transcriberRef.current) return;
+  const clearCache = async () => {
+    try {
+      const databases = await indexedDB.databases();
+      for (const db of databases) {
+        if (db.name) {
+          indexedDB.deleteDatabase(db.name);
+        }
+      }
+      if ("caches" in window) {
+        const cacheNames = await caches.keys();
+        for (const name of cacheNames) {
+          await caches.delete(name);
+        }
+      }
+      transcriberRef.current = null;
+      currentModelRef.current = null;
+      setModelLoaded(false);
+      setProgress(0);
+      setProgressText("");
+      setError("");
+      alert("缓存已清除！请刷新页面后重试。");
+    } catch (err) {
+      console.error("Clear cache error:", err);
+      setError("清除缓存失败: " + err.message);
+    }
+  };
+
+  const loadModel = async (modelId) => {
+    if (modelLoaded && currentModelRef.current === modelId && transcriberRef.current) {
+      return true;
+    }
 
     setIsModelLoading(true);
     setProgress(0);
-    setProgressText("正在加载 Whisper 模型...");
+    setError("");
+
+    const modelConfig = MODEL_OPTIONS.find((m) => m.id === modelId) || MODEL_OPTIONS[0];
+
+    setProgressText(`正在加载 Whisper ${modelConfig.name} 模型...`);
 
     try {
-      const { pipeline } = await import("@xenova/transformers");
-      
-      transcriberRef.current = await pipeline(
-        "automatic-speech-recognition",
-        "Xenova/whisper-small",
-        {
-          quantized: true,
-          progress_callback: (info) => {
-            if (info.status === "downloading") {
-              const percent = info.progress || 0;
-              setProgress(Math.round(percent));
-              setProgressText(`下载模型中... ${Math.round(percent)}%`);
-            } else if (info.status === "loading") {
-              setProgressText("加载模型到内存...");
-            }
-          },
-        }
-      );
+      const { pipeline, env } = await import("@xenova/transformers");
 
+      env.allowLocalModels = true;
+      env.localModelPath = "/models/";
+
+      const modelName = modelConfig.model;
+
+      transcriberRef.current = await pipeline("automatic-speech-recognition", modelName, {
+        quantized: true,
+        progress_callback: (info) => {
+          if (info.status === "downloading") {
+            const percent = info.progress || 0;
+            setProgress(Math.round(percent));
+            setProgressText(`下载模型中... ${Math.round(percent)}% (${modelConfig.size}MB)`);
+          } else if (info.status === "loading") {
+            setProgressText("加载模型到内存...");
+            setProgress(90);
+          } else if (info.status === "ready") {
+            setProgress(100);
+            setProgressText("模型加载完成！");
+          }
+        },
+      });
+
+      currentModelRef.current = modelId;
       setModelLoaded(true);
       setProgress(100);
-      setProgressText("模型加载完成！");
+      setProgressText(`✓ ${modelConfig.name} 模型已就绪`);
+      return true;
     } catch (err) {
       console.error("Model load error:", err);
-      setError(`模型加载失败: ${err.message}`);
+
+      let errorMsg = err.message;
+
+      if (isNetworkError(err)) {
+        errorMsg =
+          "⚠️ 网络受限，无法连接 Hugging Face 模型服务器。\n\n请尝试：\n1. 检查 VPN 是否连接\n2. 切换到更小的模型（Tiny）\n3. 点击「清缓存重试」";
+      } else if (err.message?.includes("<!doctype")) {
+        errorMsg = "⚠️ 模型下载被重定向，可能是网络问题。请检查 VPN 连接。";
+      }
+
+      setError(errorMsg);
+      return false;
     } finally {
       setIsModelLoading(false);
     }
   };
 
   const transcribe = async () => {
-    if (!file || !transcriberRef.current) {
-      if (!modelLoaded) {
-        await loadModel();
-      }
-      if (!transcriberRef.current) return;
+    if (!file) return;
+
+    if (!modelLoaded || !transcriberRef.current || currentModelRef.current !== selectedModel) {
+      const success = await loadModel(selectedModel);
+      if (!success) return;
+    }
+
+    if (!transcriberRef.current) {
+      setError("模型未加载，请重试");
+      return;
     }
 
     setIsTranscribing(true);
     setProgress(0);
-    setProgressText("正在转录音频...");
+    setProgressText("正在解码音频...");
     setError("");
     setTranscript("");
 
@@ -124,11 +202,13 @@ export default function AudioTranscribe() {
       });
 
       const arrayBuffer = await file.arrayBuffer();
-      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+      setProgressText("正在解码音频文件...");
 
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
       const audioData = audioBuffer.getChannelData(0);
-      
-      setProgressText("正在转录音频...");
+
+      setProgress(30);
+      setProgressText("正在转录音频（这可能需要几分钟）...");
 
       const result = await transcriberRef.current(audioData, {
         chunk_length_s: 30,
@@ -136,19 +216,18 @@ export default function AudioTranscribe() {
         language: "zh",
         task: "transcribe",
         return_timestamps: true,
-        callback_function: (x) => {
-          if (x.chunks) {
-            const text = x.chunks
-              .map((chunk) => `[${formatTimestamp(chunk.timestamp[0])}] ${chunk.text}`)
-              .join("\n");
-            setTranscript(text);
-          }
-        },
       });
 
-      if (result.chunks) {
+      setProgress(90);
+      setProgressText("正在格式化结果...");
+
+      if (result.chunks && result.chunks.length > 0) {
         const formattedText = result.chunks
-          .map((chunk) => `[${formatTimestamp(chunk.timestamp[0])}] ${chunk.text}`)
+          .map((chunk) => {
+            const ts = chunk.timestamp?.[0] ?? 0;
+            return `[${formatTimestamp(ts)}] ${chunk.text?.trim() || ""}`;
+          })
+          .filter((line) => line.includes("] ") && line.split("] ")[1])
           .join("\n");
         setTranscript(formattedText);
       } else if (result.text) {
@@ -156,7 +235,7 @@ export default function AudioTranscribe() {
       }
 
       setProgress(100);
-      setProgressText("转录完成！");
+      setProgressText("✓ 转录完成！");
     } catch (err) {
       console.error("Transcription error:", err);
       setError(`转录失败: ${err.message}`);
@@ -168,7 +247,7 @@ export default function AudioTranscribe() {
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(transcript);
-      setProgressText("已复制到剪贴板！");
+      setProgressText("✓ 已复制到剪贴板！");
       setTimeout(() => setProgressText(""), 2000);
     } catch (err) {
       setError("复制失败");
@@ -189,12 +268,48 @@ export default function AudioTranscribe() {
 
   return (
     <div className="space-y-4">
-      <div className="mb-2">
-        <h3 className="text-lg font-semibold text-teal-300">🎙️ 语音转脚本</h3>
-        <p className="mt-1 text-sm text-neutral-400">
-          上传音频/视频文件，本地 AI 转录为带时间戳的脚本
-        </p>
+      <div className="mb-2 flex items-start justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-teal-300">🎙️ 语音转脚本</h3>
+          <p className="mt-1 text-sm text-neutral-400">
+            上传音频/视频文件，本地 AI 转录为带时间戳的脚本
+          </p>
+        </div>
+        <button
+          onClick={() => setShowModelSelector(!showModelSelector)}
+          className="rounded-lg bg-neutral-800 px-2 py-1 text-xs text-neutral-400 hover:bg-neutral-700"
+        >
+          模型: {MODEL_OPTIONS.find((m) => m.id === selectedModel)?.name}
+        </button>
       </div>
+
+      {showModelSelector && (
+        <div className="rounded-xl border border-teal-400/30 bg-teal-900/20 p-3">
+          <p className="mb-2 text-xs text-neutral-400">选择模型大小（越小越快，越大越准）：</p>
+          <div className="flex gap-2">
+            {MODEL_OPTIONS.map((m) => (
+              <button
+                key={m.id}
+                onClick={() => {
+                  setSelectedModel(m.id);
+                  setShowModelSelector(false);
+                  if (modelLoaded) {
+                    setModelLoaded(false);
+                    transcriberRef.current = null;
+                  }
+                }}
+                className={`rounded-lg px-3 py-1.5 text-xs transition-all ${
+                  selectedModel === m.id
+                    ? "bg-teal-600 text-white"
+                    : "bg-neutral-800 text-neutral-300 hover:bg-neutral-700"
+                }`}
+              >
+                {m.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {!file ? (
         <div
@@ -226,18 +341,13 @@ export default function AudioTranscribe() {
         <div className="space-y-4">
           <div className="flex items-center justify-between rounded-xl bg-neutral-800/50 px-4 py-2">
             <div className="flex items-center gap-2">
-              <span className="text-lg">
-                {file.type.startsWith("video") ? "🎬" : "🎵"}
-              </span>
+              <span className="text-lg">{file.type.startsWith("video") ? "🎬" : "🎵"}</span>
               <div>
                 <p className="text-sm font-medium text-neutral-200">{file.name}</p>
                 <p className="text-xs text-neutral-500">{formatFileSize(file.size)}</p>
               </div>
             </div>
-            <button
-              onClick={clearFile}
-              className="text-sm text-neutral-400 hover:text-rose-400"
-            >
+            <button onClick={clearFile} className="text-sm text-neutral-400 hover:text-rose-400">
               ✕ 清除
             </button>
           </div>
@@ -245,12 +355,7 @@ export default function AudioTranscribe() {
           {mediaUrl && (
             <div className="overflow-hidden rounded-xl border border-white/10 bg-black/30">
               {file.type.startsWith("video") ? (
-                <video
-                  src={mediaUrl}
-                  controls
-                  className="w-full"
-                  style={{ maxHeight: "200px" }}
-                />
+                <video src={mediaUrl} controls className="w-full" style={{ maxHeight: "200px" }} />
               ) : (
                 <audio src={mediaUrl} controls className="w-full" />
               )}
@@ -260,9 +365,17 @@ export default function AudioTranscribe() {
       )}
 
       {error && (
-        <p className="rounded-lg bg-rose-500/10 px-3 py-2 text-sm text-rose-400">
-          {error}
-        </p>
+        <div className="rounded-xl border border-rose-400/30 bg-rose-900/20 p-3">
+          <p className="whitespace-pre-line text-sm text-rose-400">{error}</p>
+          {(isNetworkError({ message: error }) || error.includes("网络")) && (
+            <button
+              onClick={clearCache}
+              className="mt-2 rounded-lg bg-rose-600/50 px-3 py-1 text-xs text-white hover:bg-rose-500/50"
+            >
+              🗑️ 清缓存重试
+            </button>
+          )}
+        </div>
       )}
 
       {(isLoading || progressText) && (
@@ -294,6 +407,15 @@ export default function AudioTranscribe() {
             ? "🎙️ 开始转写"
             : "⬇️ 加载模型并转写"}
         </button>
+        {modelLoaded && (
+          <button
+            onClick={clearCache}
+            className="rounded-xl border border-neutral-600 px-4 py-3 text-sm text-neutral-400 hover:border-neutral-500 hover:text-neutral-300"
+            title="清除模型缓存"
+          >
+            🗑️
+          </button>
+        )}
       </div>
 
       {transcript && (
@@ -316,10 +438,17 @@ export default function AudioTranscribe() {
         </div>
       )}
 
-      <p className="text-xs text-neutral-500">
-        💡 首次使用需下载 Whisper 模型（约 150MB），模型会缓存到浏览器本地。
-        所有处理均在浏览器端完成，不上传服务器。
-      </p>
+      <div className="rounded-xl border border-white/5 bg-neutral-900/50 p-3">
+        <p className="text-xs text-neutral-500">
+          💡 <strong>使用提示：</strong>
+        </p>
+        <ul className="mt-1 space-y-1 text-xs text-neutral-500">
+          <li>• 首次使用需下载 Whisper 模型（Tiny 约 75MB）</li>
+          <li>• 模型会缓存到浏览器本地，下次无需重新下载</li>
+          <li>• 所有处理均在浏览器端完成，不上传服务器</li>
+          <li>• 如遇网络错误，请检查 VPN 是否连接 Hugging Face</li>
+        </ul>
+      </div>
     </div>
   );
 }
