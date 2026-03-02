@@ -4,6 +4,7 @@ import { verticalProfile } from "../config/vertical";
 import { saveAnalysisHistory } from "../utils/localStorage";
 import LoadingProgress from "../components/LoadingProgress";
 import HistoryList from "../components/HistoryList";
+import AudioTranscribe from "../components/AudioTranscribe";
 
 const LOADING_STAGES = [
   { threshold: 0, text: "正在连接 AI 服务..." },
@@ -236,48 +237,63 @@ export default function InputPage({ onResult }) {
         </button>
       </header>
 
-      <div className="flex flex-col gap-4 md:flex-row">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <button
           onClick={() => setActiveTab("text")}
-          className={`flex-1 rounded-2xl border p-4 text-left backdrop-blur-md transition-all ${
+          className={`rounded-2xl border p-4 text-left backdrop-blur-md transition-all ${
             activeTab === "text"
               ? "border-violet-400/50 bg-violet-900/30 ring-2 ring-violet-500/30"
               : "border-white/5 bg-neutral-900/70 hover:border-violet-400/30"
           }`}
         >
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">📝</span>
+          <div className="flex flex-col items-center gap-2 text-center">
+            <span className="text-3xl">📝</span>
             <div>
-              <h2 className="text-lg font-semibold text-violet-300">脚本文案分析</h2>
-              <p className="text-sm text-neutral-400">AI 深度分析脚本结构</p>
+              <h2 className="text-base font-semibold text-violet-300">脚本文案分析</h2>
+              <p className="text-xs text-neutral-400">AI 深度分析脚本结构</p>
             </div>
           </div>
         </button>
 
         <button
           onClick={() => setActiveTab("video")}
-          className={`flex-1 rounded-2xl border p-4 text-left backdrop-blur-md transition-all ${
+          className={`rounded-2xl border p-4 text-left backdrop-blur-md transition-all ${
             activeTab === "video"
               ? "border-fuchsia-400/50 bg-fuchsia-900/30 ring-2 ring-fuchsia-500/30"
               : "border-white/5 bg-neutral-900/70 hover:border-fuchsia-400/30"
           }`}
         >
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🎬</span>
+          <div className="flex flex-col items-center gap-2 text-center">
+            <span className="text-3xl">🎬</span>
             <div>
-              <h2 className="text-lg font-semibold text-fuchsia-300">视频解析</h2>
-              <p className="text-sm text-neutral-400">提取无水印原视频</p>
+              <h2 className="text-base font-semibold text-fuchsia-300">视频解析</h2>
+              <p className="text-xs text-neutral-400">提取无水印原视频</p>
+            </div>
+          </div>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("transcribe")}
+          className={`rounded-2xl border p-4 text-left backdrop-blur-md transition-all ${
+            activeTab === "transcribe"
+              ? "border-teal-400/50 bg-teal-900/30 ring-2 ring-teal-500/30"
+              : "border-white/5 bg-neutral-900/70 hover:border-teal-400/30"
+          }`}
+        >
+          <div className="flex flex-col items-center gap-2 text-center">
+            <span className="text-3xl">🎙️</span>
+            <div>
+              <h2 className="text-base font-semibold text-teal-300">语音转脚本</h2>
+              <p className="text-xs text-neutral-400">本地 AI 语音转录</p>
             </div>
           </div>
         </button>
       </div>
 
       <div className="rounded-2xl border border-white/5 bg-neutral-900/70 p-5 backdrop-blur-md">
-        {activeTab === "text" ? (
-          <TextAnalysisPanel onResult={onResult} />
-        ) : (
-          <VideoParserPanel />
-        )}
+        {activeTab === "text" && <TextAnalysisPanel onResult={onResult} />}
+        {activeTab === "video" && <VideoParserPanel />}
+        {activeTab === "transcribe" && <AudioTranscribe />}
       </div>
 
       <HistoryList
