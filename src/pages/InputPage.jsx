@@ -73,9 +73,6 @@ function TextAnalysisPanel({ onResult }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="mb-2">
         <h3 className="text-lg font-semibold text-violet-300">🌸 输入素材文本</h3>
-        <p className="mt-1 text-sm text-neutral-400">
-          受众：{verticalProfile.audience}
-        </p>
       </div>
 
       <label className="block text-sm text-neutral-300" htmlFor="source-text">
@@ -221,7 +218,7 @@ export default function InputPage({ onResult }) {
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-violet-300 flex items-center gap-2">
-            ♥️ 内容逆向实验室 · 大学生活
+            ♥️ 内容逆向实验室
           </h1>
           <p className="mt-1 text-sm text-neutral-400">
             输入一段脚本，快速得到结构化分析结果。

@@ -47,7 +47,7 @@ export default function ResultPage() {
       <main className="min-h-screen bg-gradient-to-br from-neutral-950 to-neutral-900 px-4 py-8 text-neutral-100">
         <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
           <header className="hero-bg relative overflow-hidden flex items-center justify-between rounded-2xl border border-white/5 bg-neutral-900/70 p-6 backdrop-blur-md brightness-[1.03] contrast-[1.08] saturate-[1.15] before:content-[''] before:absolute before:inset-0 before:bg-gradient-to-b before:from-transparent before:via-transparent before:to-black/20 before:pointer-events-none">
-            <h1 className="hero-title relative z-10 text-2xl font-semibold">💕 内容逆向实验室 · 大学生活</h1>
+            <h1 className="hero-title relative z-10 text-2xl font-semibold">💕 内容逆向实验室</h1>
             <div className="relative z-10 flex gap-2">
               <button
                 type="button"
@@ -82,7 +82,7 @@ export default function ResultPage() {
     <main className="min-h-screen bg-gradient-to-br from-neutral-950 to-neutral-900 px-4 py-8 text-neutral-100">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
         <header className="hero-bg relative overflow-hidden flex items-center justify-between rounded-2xl border border-white/5 bg-neutral-900/70 p-6 backdrop-blur-md brightness-[1.03] contrast-[1.08] saturate-[1.15] before:content-[''] before:absolute before:inset-0 before:bg-gradient-to-b before:from-transparent before:via-transparent before:to-black/20 before:pointer-events-none">
-          <h1 className="hero-title relative z-10 text-2xl font-semibold">💕 内容逆向实验室 · 大学生活</h1>
+          <h1 className="hero-title relative z-10 text-2xl font-semibold">💕 内容逆向实验室</h1>
           <div className="relative z-10 flex gap-2">
             <button
               type="button"
